@@ -185,12 +185,7 @@ export default function AdminDashboardPage() {
   };
 
   const getReviewLink = (card: Card) => {
-    const params = new URLSearchParams({
-      card_id: card["Card ID"],
-      name: card["Nama Bisnis"] || "Bisnis",
-      phone: card["Nomor Telpon"] || "",
-    });
-    return `${window.location.origin}/review?${params.toString()}`;
+    return `${window.location.origin}/r/${card["Card ID"]}`;
   };
 
   const copyLink = async (card: Card) => {
