@@ -31,13 +31,13 @@ async function fetchNextCardId(): Promise<string> {
   const prefix = "57";
   const { data } = await supabase
     .from("cards")
-    .select("Card ID")
-    .like("Card ID", `${prefix}%`);
+    .select("Card ID" as never)
+    .like("Card ID" as never, `${prefix}%`);
 
   if (!data || data.length === 0) return `${prefix}1`;
 
-  const numbers = data
-    .map((c) => parseInt(c["Card ID"].slice(prefix.length), 10))
+  const numbers = (data as unknown as Record<string, string>[])
+    .map((c) => parseInt(String(c["Card ID"]).slice(prefix.length), 10))
     .filter((n) => !isNaN(n));
   const max = numbers.length > 0 ? numbers.reduce((a, b) => Math.max(a, b), 0) : 0;
   return `${prefix}${String(max + 1)}`;
