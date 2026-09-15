@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
+import AddressAutocomplete from "../../components/AddressAutocomplete";
 
 interface CardData {
   card_id: string;
@@ -15,8 +16,8 @@ interface SetupForm {
   companyName: string;
   address: string;
   phone: string;
-  googleReviewLink: string;
   pin: string;
+  placeId: string;
 }
 
 export default function CardReviewPage() {
@@ -31,8 +32,8 @@ export default function CardReviewPage() {
     companyName: "",
     address: "",
     phone: "",
-    googleReviewLink: "",
     pin: "",
+    placeId: "",
   });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof SetupForm, string>>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -75,18 +76,13 @@ export default function CardReviewPage() {
   const validateForm = (): boolean => {
     const errors: Partial<Record<keyof SetupForm, string>> = {};
 
+    if (!form.companyName.trim()) errors.companyName = "Nama bisnis wajib diisi";
+    if (!form.address.trim()) errors.address = "Alamat wajib diisi";
     if (!form.phone.trim()) {
-      errors.phone = "Nomor WhatsApp wajib diisi";
+      errors.phone = "Nomor telepon wajib diisi";
     } else if (!/^\d{9,13}$/.test(form.phone.replace(/[^0-9]/g, ""))) {
       errors.phone = "Format nomor telepon tidak valid (9-13 digit setelah +62)";
     }
-
-    if (!form.googleReviewLink.trim()) {
-      errors.googleReviewLink = "Link Google Review wajib diisi";
-    } else if (!form.googleReviewLink.includes("google")) {
-      errors.googleReviewLink = "Harus berisi link Google Review yang valid";
-    }
-
     if (!form.pin.trim()) {
       errors.pin = "PIN wajib diisi";
     } else if (form.pin.length !== 6 || !/^\d{6}$/.test(form.pin)) {
@@ -109,10 +105,10 @@ export default function CardReviewPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyName: form.companyName.trim() || "Bisnis Saya",
+          companyName: form.companyName.trim(),
           address: form.address.trim(),
           phone: `62${form.phone.replace(/[^0-9]/g, "").replace(/^0+/, "").replace(/^62/, "")}`,
-          placeId: "",
+          placeId: form.placeId,
           pin: form.pin,
         }),
       });
@@ -128,9 +124,9 @@ export default function CardReviewPage() {
       setCardData({
         card_id: cardId,
         claimed: true,
-        business_name: data.business_name || form.companyName || "Bisnis Saya",
+        business_name: data.business_name || form.companyName,
         phone: data.phone || form.phone,
-        place_id: data.place_id || "",
+        place_id: data.place_id || form.placeId,
       });
     } catch {
       setSubmitError("Terjadi kesalahan. Silakan coba lagi.");
@@ -190,11 +186,11 @@ export default function CardReviewPage() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
               <span className="bg-gradient-to-r from-cyan-glow to-blue-glow bg-clip-text text-transparent">
-                Aktivasi Tautan Ulasan
+                Buat Link Review
               </span>
             </h1>
             <p className="mt-2 text-navy-400">
-              Masukkan detail bisnis Anda untuk mengaktifkan sistem ulasan pintar pada kartu ini.
+              Isi data bisnis Anda untuk menghasilkan link &amp; QR code review.
             </p>
           </div>
 
@@ -202,35 +198,45 @@ export default function CardReviewPage() {
             <div className="space-y-5">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-navy-200">
-                  Nama Bisnis / Brand <span className="text-navy-500">(Opsional)</span>
+                  Nama Perusahaan / Bisnis <span className="text-cyan-glow">*</span>
                 </label>
                 <input
                   type="text"
                   name="companyName"
                   value={form.companyName}
                   onChange={handleFormChange}
-                  placeholder="Contoh: Kopi Kita"
+                  placeholder="Contoh: KopiKita"
                   className={inputClass("companyName")}
                 />
+                {formErrors.companyName && (
+                  <p className="mt-1 text-xs text-red-400">{formErrors.companyName}</p>
+                )}
               </div>
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-navy-200">
-                  Alamat Operasional <span className="text-navy-500">(Opsional)</span>
+                  Alamat Perusahaan <span className="text-cyan-glow">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="address"
+                <AddressAutocomplete
                   value={form.address}
-                  onChange={handleFormChange}
-                  placeholder="Contoh: Jl. Pemuda No. 123, Semarang"
-                  className={inputClass("address")}
+                  onChange={(val) => {
+                    setForm((prev) => ({ ...prev, address: val }));
+                    if (formErrors.address) setFormErrors((prev) => ({ ...prev, address: undefined }));
+                  }}
+                  onSelect={(data) => {
+                    setForm((prev) => ({ ...prev, placeId: data.placeId }));
+                  }}
+                  placeholder="Contoh: Jl. Sudirman No. 123, Jakarta"
+                  className={formErrors.address ? "ring-2 ring-red-500/20" : ""}
                 />
+                {formErrors.address && (
+                  <p className="mt-1 text-xs text-red-400">{formErrors.address}</p>
+                )}
               </div>
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-navy-200">
-                  Nomor WhatsApp Bisnis <span className="text-cyan-glow">*</span>
+                  Nomor Telepon / WhatsApp <span className="text-cyan-glow">*</span>
                 </label>
                 <div className="flex">
                   <span className="flex items-center rounded-l-lg border border-r-0 border-navy-600/50 bg-navy-700/80 px-4 text-sm text-navy-300">
@@ -256,24 +262,7 @@ export default function CardReviewPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-navy-200">
-                  Link Google Review <span className="text-cyan-glow">*</span>
-                </label>
-                <input
-                  type="url"
-                  name="googleReviewLink"
-                  value={form.googleReviewLink}
-                  onChange={handleFormChange}
-                  placeholder="https://search.google.com/local/writereview?placeid=..."
-                  className={inputClass("googleReviewLink")}
-                />
-                {formErrors.googleReviewLink && (
-                  <p className="mt-1 text-xs text-red-400">{formErrors.googleReviewLink}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-navy-200">
-                  PIN Keamanan 6-Digit <span className="text-cyan-glow">*</span>
+                  6-Digit PIN <span className="text-cyan-glow">*</span>
                 </label>
                 <input
                   type="password"
@@ -301,12 +290,12 @@ export default function CardReviewPage() {
               disabled={submitting}
               className="mt-8 w-full rounded-xl bg-gradient-to-r from-cyan-glow to-blue-glow px-6 py-3.5 text-sm font-semibold text-navy-950 shadow-lg shadow-cyan-glow/25 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-glow/40 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             >
-              {submitting ? "Memproses..." : "Aktifkan Kartu & Buat Link →"}
+              {submitting ? "Memproses..." : "Buka Halaman Review →"}
             </button>
           </form>
 
           <p className="mt-8 text-center text-xs text-navy-600">
-            Kartu ID: <span className="font-mono text-navy-500">{cardId}</span>
+            Created by Laits ID
           </p>
         </div>
       </main>
