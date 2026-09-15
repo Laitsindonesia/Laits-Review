@@ -1,0 +1,23 @@
+{
+  "businesses": [
+    {
+      "id": "eaaae7c5-8cf3-49e0-a2db-ccea305e3e23",
+      "companyName": "Eagle School",
+      "address": "Jl. Delta Mas VII, Panggung Lor, Kec. Semarang Utara, Kota Semarang, Jawa Tengah 50176, Indonesia",
+      "phone": "6282154321732",
+      "placeId": "ChIJuaUM9e31cC4Rlv83bWk0xvQ",
+      "createdAt": "2026-09-07T09:42:42.539Z",
+      "reviewStats": {
+        "total": 0,
+        "average": 0,
+        "distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        }
+      }
+    }
+  ]
+}
