@@ -37,12 +37,8 @@ function ReviewContent() {
     if (!feedback.trim()) return;
 
     const message = [
-      `*Umpan Balik Pelanggan*`,
-      ``,
-      `*Bisnis:* ${name}`,
       `*Rating:* ${"⭐".repeat(rating)} (${rating}/5)`,
-      ``,
-      `*Masukan / Keluhan:*`,
+      `*Masukan Untuk Manager Toko:*`,
       `${feedback.trim()}`,
     ].join("\n");
 
