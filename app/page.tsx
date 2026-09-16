@@ -47,6 +47,13 @@ export default function Home() {
 
         <div className="mt-16 flex items-center justify-center gap-8 text-xs text-navy-500">
           <Link
+            href="/pesan-kartu"
+            className="flex items-center gap-2 text-cyan-glow/60 hover:text-cyan-glow transition-colors"
+          >
+            <div className="h-2 w-2 rounded-full bg-green-500/50 animate-pulse" />
+            Pesan Kartu
+          </Link>
+          <Link
             href="/admin"
             className="flex items-center gap-2 text-cyan-glow/60 hover:text-cyan-glow transition-colors"
           >
