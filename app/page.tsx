@@ -19,7 +19,7 @@ export default function Home() {
           />
         </div>
 
-        <h1 className="mb-4 text-5xl font-bold tracking-tight">
+        <h1 className="mb-4 text-5xl font-bold tracking-tight" style={{ fontFamily: "var(--font-league-spartan)" }}>
           <span className="bg-gradient-to-r from-cyan-glow via-blue-glow to-indigo-glow bg-clip-text text-transparent">
             Laits Review
           </span>
