@@ -9,17 +9,17 @@ export default function Home() {
       <div className="absolute bottom-20 right-1/4 h-96 w-96 rounded-full bg-indigo-glow/5 blur-[150px]" />
 
       <div className="relative z-10 mx-auto max-w-lg text-center">
-        <div className="mb-8 inline-flex h-24 w-24 items-center justify-center rounded-2xl glass glow-border animate-pulse-glow overflow-hidden">
+        <div className="mb-6 inline-flex h-28 w-28 items-center justify-center rounded-full bg-navy-800/50 border-2 border-cyan-glow/30 glow-border overflow-hidden animate-pulse-glow">
           <Image
-            src="/logo-laits.png"
-            alt="Laits Logo"
-            width={64}
-            height={64}
+            src="/icon-pwa.png"
+            alt="Laits Review"
+            width={96}
+            height={96}
             className="object-contain"
           />
         </div>
 
-        <h1 className="mb-4 text-5xl font-bold tracking-tight" style={{ fontFamily: "var(--font-league-spartan)" }}>
+        <h1 className="mb-4 text-5xl font-bold tracking-tight">
           <span className="bg-gradient-to-r from-cyan-glow via-blue-glow to-indigo-glow bg-clip-text text-transparent">
             Laits Review
           </span>
