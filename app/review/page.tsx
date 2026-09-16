@@ -7,7 +7,6 @@ function ReviewContent() {
   const searchParams = useSearchParams();
   const [rating, setRating] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
-  const [customerName, setCustomerName] = useState("");
   const [feedback, setFeedback] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -35,14 +34,13 @@ function ReviewContent() {
 
   const handleSubmitFeedback = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName.trim() || !feedback.trim()) return;
+    if (!feedback.trim()) return;
 
     const message = [
       `*Umpan Balik Pelanggan*`,
       ``,
       `*Bisnis:* ${name}`,
       `*Rating:* ${"⭐".repeat(rating)} (${rating}/5)`,
-      `*Nama Pelanggan:* ${customerName.trim()}`,
       ``,
       `*Masukan / Keluhan:*`,
       `${feedback.trim()}`,
@@ -231,20 +229,6 @@ function ReviewContent() {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-navy-200">
-                    Nama Anda <span className="text-cyan-glow">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Masukkan nama Anda"
-                    required
-                    className="w-full rounded-lg border border-navy-600/50 bg-navy-800/50 px-4 py-3 text-sm text-navy-100 placeholder-navy-500 transition-all duration-300 outline-none focus:border-cyan-glow/50 focus:ring-2 focus:ring-cyan-glow/20 focus:bg-navy-800/80"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-navy-200">
                     Masukan / Keluhan <span className="text-cyan-glow">*</span>
                   </label>
                   <textarea
@@ -261,7 +245,7 @@ function ReviewContent() {
                   type="submit"
                   className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-green-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/40 hover:scale-[1.01] active:scale-[0.99]"
                 >
-                  Kirim via WhatsApp
+                  Beri Masukan Ke Manager Toko
                 </button>
               </form>
             )}
@@ -269,7 +253,7 @@ function ReviewContent() {
         )}
 
         <p className="mt-8 text-center text-xs text-navy-600">
-          Powered by Laits Review
+          Powered by Laits.id
         </p>
       </div>
     </main>

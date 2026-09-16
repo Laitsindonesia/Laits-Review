@@ -27,22 +27,6 @@ function getNextCardId(cards: Card[]): string {
   return `${prefix}${String(next)}`;
 }
 
-async function fetchNextCardId(): Promise<string> {
-  const prefix = "57";
-  const { data } = await supabase
-    .from("cards")
-    .select("Card ID" as never)
-    .like("Card ID" as never, `${prefix}%`);
-
-  if (!data || data.length === 0) return `${prefix}1`;
-
-  const numbers = (data as unknown as Record<string, string>[])
-    .map((c) => parseInt(String(c["Card ID"]).slice(prefix.length), 10))
-    .filter((n) => !isNaN(n));
-  const max = numbers.length > 0 ? numbers.reduce((a, b) => Math.max(a, b), 0) : 0;
-  return `${prefix}${String(max + 1)}`;
-}
-
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [cards, setCards] = useState<Card[]>([]);
@@ -118,24 +102,26 @@ export default function AdminDashboardPage() {
     if (isNaN(count) || count <= 0) return;
 
     setGenerating(true);
-    let currentId = await fetchNextCardId();
-    const rows = [];
-    for (let i = 0; i < count; i++) {
-      rows.push({
-        "Card ID": currentId,
-        "Nama Bisnis": "",
-        "Nomor Telpon": "",
-        "Card Status": false,
+    try {
+      const res = await fetch("/api/cards/generate-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count }),
       });
-      const num = parseInt(currentId.slice(2), 10) + 1;
-      currentId = `57${String(num)}`;
-    }
+      const data = await res.json();
 
-    const { error } = await supabase.from("cards").insert(rows);
-    if (!error) {
-      setBatchCount("");
-      setShowGenerate(false);
-      fetchCards();
+      if (data.success && data.cards) {
+        setCards((prev) => {
+          const updated = [...prev, ...data.cards];
+          return updated.sort(
+            (a, b) => parseInt(a["Card ID"], 10) - parseInt(b["Card ID"], 10)
+          );
+        });
+        setBatchCount("");
+        setShowGenerate(false);
+      }
+    } catch {
+      // silent
     }
     setGenerating(false);
   };
