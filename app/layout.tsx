@@ -15,8 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Laits Review",
   description: "Laits Review - Customer Feedback Filter",
+  manifest: "/manifest.json",
+  themeColor: "#0a1628",
   icons: {
-    icon: "/logo-laits.png",
+    icon: "/icon-pwa.png",
+    apple: "/icon-pwa.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Laits Review",
   },
 };
 
