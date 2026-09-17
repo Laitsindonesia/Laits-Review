@@ -18,7 +18,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("cards")
-    .select('"Card ID", "Card Status", "Nama Bisnis", "Nomor Telpon", "PlaceId"')
+    .select('"Card ID", "Card Status", "Nama Bisnis", "Nomor Telpon", "PlaceId", qr_token, qr_destination')
     .eq("Card ID", card_id)
     .single();
 
@@ -35,6 +35,8 @@ export async function GET(
     business_name: data["Nama Bisnis"] || "",
     phone: data["Nomor Telpon"] || "",
     place_id: data["PlaceId"] || "",
+    qr_token: data.qr_token || "",
+    qr_destination: data.qr_destination || "",
   });
 }
 

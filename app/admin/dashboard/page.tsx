@@ -13,6 +13,8 @@ interface Card {
   "Nomor Telpon": string;
   "Card Status": boolean;
   created_at: string;
+  qr_token?: string;
+  qr_destination?: string;
 }
 
 function getNextCardId(cards: Card[]): string {
@@ -46,6 +48,10 @@ export default function AdminDashboardPage() {
   const [editPinInput, setEditPinInput] = useState("");
   const [editPinError, setEditPinError] = useState("");
   const [editPinVerified, setEditPinVerified] = useState(false);
+  const [destInput, setDestInput] = useState("");
+  const [savingDest, setSavingDest] = useState(false);
+  const [destError, setDestError] = useState("");
+  const [destOk, setDestOk] = useState("");
   const qrRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 25;
 
@@ -174,8 +180,56 @@ export default function AdminDashboardPage() {
     return `${window.location.origin}/r/${card["Card ID"]}`;
   };
 
+  const getQrLink = (card: Card) => {
+    if (card.qr_token) return `${window.location.origin}/q/${card.qr_token}`;
+    return getReviewLink(card);
+  };
+
+  const getDisplayDestination = (card: Card) => {
+    if (card.qr_destination) return card.qr_destination;
+    return `/r/${card["Card ID"]} (default)`;
+  };
+
+  const openQR = (card: Card) => {
+    setDestInput(card.qr_destination || "");
+    setDestError("");
+    setDestOk("");
+    setShowQR(card);
+  };
+
+  const handleSaveDestination = async () => {
+    if (!showQR) return;
+    setSavingDest(true);
+    setDestError("");
+    setDestOk("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`/api/cards/${showQR.id}/destination`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ destination: destInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDestError(data.error || "Gagal menyimpan destination");
+        return;
+      }
+      const updated: Card = { ...showQR, qr_destination: data.qr_destination };
+      setShowQR(updated);
+      setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      setDestOk("Destination tersimpan. QR fisik tetap sama.");
+    } catch {
+      setDestError("Gagal menyimpan destination.");
+    } finally {
+      setSavingDest(false);
+    }
+  };
+
   const copyLink = async (card: Card) => {
-    const link = getReviewLink(card);
+    const link = getQrLink(card);
     try {
       await navigator.clipboard.writeText(link);
     } catch {
@@ -323,7 +377,7 @@ export default function AdminDashboardPage() {
                             {copied === card.id ? "✓" : "Link"}
                           </button>
                           <button
-                            onClick={() => setShowQR(card)}
+                            onClick={() => openQR(card)}
                             className="rounded-lg border border-navy-500/30 bg-navy-800/40 px-3 py-1.5 text-xs font-medium text-navy-300 transition-all hover:bg-navy-700/60 hover:border-amber-500/30 hover:text-amber-400 active:scale-95"
                           >
                             QR
@@ -558,17 +612,20 @@ export default function AdminDashboardPage() {
 
         {showQR && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md glass rounded-2xl p-8 glow-border">
-              <h2 className="mb-2 text-xl font-bold text-navy-100 text-center">
+            <div className="w-full max-w-md glass rounded-2xl p-8 glow-border max-h-[90vh] overflow-y-auto">
+              <h2 className="mb-1 text-xl font-bold text-navy-100 text-center">
                 QR Code - {showQR["Card ID"]}
               </h2>
-              <p className="mb-6 text-sm text-navy-400 text-center">
-                Scan QR ini untuk membuka halaman review
+              <p className="mb-1 text-xs text-navy-500 text-center font-mono">
+                Token: {showQR.qr_token || "- (jalankan backfill)"}
               </p>
-              <div ref={qrRef} className="flex justify-center mb-6">
+              <p className="mb-4 text-sm text-navy-400 text-center">
+                QR fisik berisi link dinamis. Ganti tujuan tanpa cetak ulang.
+              </p>
+              <div ref={qrRef} className="flex justify-center mb-4">
                 <div className="rounded-xl bg-white p-6 shadow-lg shadow-cyan-glow/10">
                   <QRCodeSVG
-                    value={getReviewLink(showQR)}
+                    value={getQrLink(showQR)}
                     size={200}
                     bgColor="#ffffff"
                     fgColor="#0a1628"
@@ -576,6 +633,35 @@ export default function AdminDashboardPage() {
                     includeMargin={false}
                   />
                 </div>
+              </div>
+              <p className="mb-4 text-xs text-navy-400 text-center break-all">
+                QR → <span className="font-mono text-cyan-glow">{getQrLink(showQR)}</span>
+                <br />
+                Tujuan → <span className="font-mono text-navy-200">{getDisplayDestination(showQR)}</span>
+              </p>
+              <div className="mb-4 rounded-xl border border-navy-600/50 bg-navy-800/40 p-4">
+                <label className="mb-1.5 block text-sm font-medium text-navy-200">
+                  Edit QR Destination
+                </label>
+                <input
+                  type="text"
+                  value={destInput}
+                  onChange={(e) => { setDestInput(e.target.value); setDestError(""); setDestOk(""); }}
+                  placeholder="/r/571 (default) atau /promo atau https://..."
+                  className="w-full rounded-lg border border-navy-600/50 bg-navy-800/50 px-4 py-2.5 text-sm text-navy-100 placeholder-navy-500 outline-none focus:border-cyan-glow/50 focus:ring-2 focus:ring-cyan-glow/20"
+                />
+                <p className="mt-1.5 text-[11px] leading-relaxed text-navy-500">
+                  Kosongkan untuk kembali ke default. Internal: <span className="font-mono">/promo</span>, <span className="font-mono">/r/571</span>. Eksternal wajib <span className="font-mono">https://</span>.
+                </p>
+                {destError && <p className="mt-2 text-xs text-red-400">{destError}</p>}
+                {destOk && <p className="mt-2 text-xs text-green-400">{destOk}</p>}
+                <button
+                  onClick={handleSaveDestination}
+                  disabled={savingDest}
+                  className="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition-all hover:shadow-xl hover:shadow-amber-500/40 active:scale-[0.99] disabled:opacity-50"
+                >
+                  {savingDest ? "Menyimpan..." : "Simpan Destination"}
+                </button>
               </div>
               <div className="flex gap-3">
                 <button
@@ -588,7 +674,7 @@ export default function AdminDashboardPage() {
                   onClick={() => copyLink(showQR)}
                   className="flex-1 rounded-xl bg-gradient-to-r from-cyan-glow to-blue-glow px-6 py-3 text-sm font-semibold text-navy-950 shadow-lg shadow-cyan-glow/25 transition-all hover:shadow-xl hover:shadow-cyan-glow/40 hover:scale-[1.01] active:scale-[0.99]"
                 >
-                  {copied === showQR.id ? "✓ Tersalin!" : "Salin Link"}
+                  {copied === showQR.id ? "✓ Tersalin!" : "Salin Link QR"}
                 </button>
               </div>
             </div>

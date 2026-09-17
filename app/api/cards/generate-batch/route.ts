@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { generateQrToken } from "../../../../lib/qr";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -41,14 +42,23 @@ export async function POST(request: Request) {
       }
     }
 
+    const usedTokens = new Set(
+      (existing || []).map((c) => c.qr_token).filter(Boolean)
+    );
     const rows = [];
     for (let i = 0; i < count; i++) {
       const cardId = `${prefix}${maxNum + i + 1}`;
+      let token = generateQrToken();
+      let guard = 0;
+      while (usedTokens.has(token) && guard++ < 100) token = generateQrToken();
+      usedTokens.add(token);
       rows.push({
         "Card ID": cardId,
         "Nama Bisnis": "",
         "Nomor Telpon": "",
         "Card Status": false,
+        qr_token: token,
+        qr_destination: "",
       });
     }
 

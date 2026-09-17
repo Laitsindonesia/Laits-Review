@@ -11,7 +11,7 @@ export default function Home() {
       <div className="relative z-10 mx-auto max-w-lg text-center">
         <div className="mb-6 inline-flex h-28 w-28 items-center justify-center rounded-full bg-navy-800/50 border-2 border-cyan-glow/30 glow-border overflow-hidden animate-pulse-glow">
           <Image
-            src="/icon-pwa.png"
+            src="/logo-depan.png"
             alt="Laits Review"
             width={96}
             height={96}

@@ -22,6 +22,14 @@ const BATCH_SIZE = 500;
 const START_ID = 1;
 const END_ID = 200;
 
+const QR_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function genQrToken(length = 6) {
+  const bytes = require("crypto").randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) out += QR_ALPHABET[bytes[i] % QR_ALPHABET.length];
+  return out;
+}
+
 async function main() {
   const env = loadEnv();
   const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
@@ -63,6 +71,8 @@ async function main() {
         "Nama Bisnis": "",
         "Nomor Telpon": "",
         "Card Status": false,
+        qr_token: genQrToken(),
+        qr_destination: "",
       });
     }
 
