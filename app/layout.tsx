@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { League_Spartan } from "next/font/google";
 import "./globals.css";
 
@@ -7,11 +7,14 @@ const leagueSpartan = League_Spartan({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#0a1628",
+};
+
 export const metadata: Metadata = {
   title: "Laits Review",
   description: "Laits Review - Customer Feedback Filter",
   manifest: "/manifest.json",
-  themeColor: "#0a1628",
   icons: {
     icon: "/icon-pwa.png",
     apple: "/icon-pwa.png",
@@ -27,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="id"
+      data-scroll-behavior="smooth"
       className={`${leagueSpartan.variable} h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col bg-navy-950 bg-grid">{children}</body>

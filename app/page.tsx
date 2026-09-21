@@ -15,7 +15,8 @@ export default function Home() {
             alt="Laits Review"
             width={96}
             height={96}
-            className="object-contain"
+            className="w-full h-full object-cover"
+            loading="eager"
           />
         </div>
 

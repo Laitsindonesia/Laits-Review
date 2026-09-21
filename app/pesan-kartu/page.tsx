@@ -51,31 +51,21 @@ export default function PesanKartuPage() {
           </a>
         </div>
 
-        {/* Mockup Card */}
-        <div className="mx-auto max-w-md">
-          <div className="glass rounded-2xl p-6 glow-border">
-            <div className="aspect-[3/2] rounded-xl bg-gradient-to-br from-navy-700/80 to-navy-800/80 border border-navy-600/50 flex flex-col items-center justify-center gap-3 p-6">
-              <Image
-                src="/icon-pwa.png"
-                alt="Review Langsung Card"
-                width={64}
-                height={64}
-                className="object-contain"
-              />
-              <p className="text-sm font-bold text-cyan-glow">Review Langsung</p>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <span key={s} className="text-lg text-amber-400">★</span>
-                ))}
-              </div>
-              <p className="text-[10px] text-navy-400">Tap untuk memberi rating</p>
-            </div>
-          </div>
+        {/* 3D NFC Card */}
+        <div className="mx-auto max-w-sm animate-float">
+          <Image
+            src="/kartu-nfc.jpeg"
+            alt="Review Langsung Card"
+            width={400}
+            height={267}
+            className="rounded-2xl drop-shadow-[0_0_30px_rgba(0,74,173,0.4)]"
+            priority
+          />
         </div>
       </section>
 
       {/* Cara Kerja Section */}
-      <section id="cara-kerja" className="relative z-10 mx-auto max-w-6xl px-4 py-20">
+      <section id="cara-kerja" className="relative z-10 mx-auto max-w-6xl px-4 py-20 scroll-mt-8">
         <div className="mb-12 text-center">
           <h2 className="mb-3 text-3xl font-bold tracking-tight text-navy-100">
             Hanya Butuh 3 Detik
@@ -242,13 +232,13 @@ export default function PesanKartuPage() {
       <footer className="relative z-10 border-t border-navy-700/50 py-10">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <p className="mb-3 text-sm font-bold text-navy-200">Review Langsung</p>
-          <div className="mb-4 flex items-center justify-center gap-6 text-xs text-navy-500">
-            <a href="#" className="hover:text-navy-300 transition-colors">
+          <div className="mb-4 flex items-center justify-center gap-6 text-xs text-navy-600">
+            <span className="cursor-default">
               Syarat &amp; Ketentuan
-            </a>
-            <a href="#" className="hover:text-navy-300 transition-colors">
+            </span>
+            <span className="cursor-default">
               Kebijakan Privasi
-            </a>
+            </span>
           </div>
           <p className="text-xs text-navy-600">
             &copy; 2026 Review Langsung. Hak cipta dilindungi.
