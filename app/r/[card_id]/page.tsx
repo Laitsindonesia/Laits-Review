@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import AddressAutocomplete from "../../components/AddressAutocomplete";
+import DirectActivatedRedirect from "../../components/DirectActivatedRedirect";
+import {
+  ACTIVATION_MODE_DIRECT,
+  ACTIVATION_MODE_LAITS,
+} from "../../../lib/activation";
 
 interface CardData {
   card_id: string;
@@ -18,6 +23,7 @@ interface SetupForm {
   phone: string;
   pin: string;
   placeId: string;
+  mode: string;
 }
 
 export default function CardReviewPage() {
@@ -34,10 +40,13 @@ export default function CardReviewPage() {
     phone: "",
     pin: "",
     placeId: "",
+    mode: "",
   });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof SetupForm, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [directActivated, setDirectActivated] = useState(false);
+  const [directPlaceId, setDirectPlaceId] = useState("");
 
   const fetchCard = useCallback(async () => {
     try {
@@ -65,6 +74,10 @@ export default function CardReviewPage() {
     if (name === "phone") {
       const numericValue = value.replace(/[^0-9]/g, "").slice(0, 13);
       setForm((prev) => ({ ...prev, [name]: numericValue }));
+    } else if (name === "address") {
+      // Teks alamat diubah manual -> PlaceId lama tidak berlaku lagi,
+      // wajib pilih ulang dari saran Google Maps.
+      setForm((prev) => ({ ...prev, address: value, placeId: "" }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -89,6 +102,13 @@ export default function CardReviewPage() {
       errors.pin = "PIN harus 6 digit angka";
     }
 
+    if (!form.mode.trim()) {
+      errors.mode = "Pilih salah satu mode kartu";
+    } else if (form.mode === ACTIVATION_MODE_DIRECT && !form.placeId.trim()) {
+      errors.mode =
+        "Pilih alamat bisnis dari daftar saran Google Maps untuk mode Direct Google Review";
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -110,6 +130,7 @@ export default function CardReviewPage() {
           phone: `62${form.phone.replace(/[^0-9]/g, "").replace(/^0+/, "").replace(/^62/, "")}`,
           placeId: form.placeId,
           pin: form.pin,
+          mode: form.mode,
         }),
       });
 
@@ -119,6 +140,11 @@ export default function CardReviewPage() {
         setSubmitError(data.error || "Gagal mengaktifkan kartu");
         setSubmitting(false);
         return;
+      }
+
+      if (form.mode === ACTIVATION_MODE_DIRECT) {
+        setDirectPlaceId(form.placeId);
+        setDirectActivated(true);
       }
 
       setCardData({
@@ -170,6 +196,10 @@ export default function CardReviewPage() {
 
   if (!cardData) return null;
 
+  if (directActivated) {
+    return <DirectActivatedRedirect placeId={directPlaceId} />;
+  }
+
   if (!cardData.claimed) {
     return (
       <main className="min-h-screen relative">
@@ -220,7 +250,8 @@ export default function CardReviewPage() {
                 <AddressAutocomplete
                   value={form.address}
                   onChange={(val) => {
-                    setForm((prev) => ({ ...prev, address: val }));
+                    // Teks alamat diubah manual -> PlaceId lama tidak berlaku lagi.
+                    setForm((prev) => ({ ...prev, address: val, placeId: "" }));
                     if (formErrors.address) setFormErrors((prev) => ({ ...prev, address: undefined }));
                   }}
                   onSelect={(data) => {
@@ -262,6 +293,55 @@ export default function CardReviewPage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-navy-200">
+                  Mode Kartu <span className="text-cyan-glow">*</span>
+                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((prev) => ({ ...prev, mode: ACTIVATION_MODE_DIRECT }));
+                      if (formErrors.mode) setFormErrors((prev) => ({ ...prev, mode: undefined }));
+                    }}
+                    className={`rounded-xl border p-4 text-left transition-all duration-300 outline-none ${
+                      form.mode === ACTIVATION_MODE_DIRECT
+                        ? "border-cyan-glow/60 bg-cyan-glow/10 ring-2 ring-cyan-glow/20"
+                        : "border-navy-600/50 bg-navy-800/50 hover:border-cyan-glow/30 hover:bg-navy-800/80"
+                    }`}
+                  >
+                    <p className="mb-1 text-sm font-semibold text-navy-100">
+                      Direct Google Review
+                    </p>
+                    <p className="mb-1 text-xs leading-relaxed text-navy-400">
+                      Memudahkan pelanggan memberikan ulasan untuk bisnis Anda langsung dari google review. Tinggal tap NFC atau scan QR Code.
+                    </p>
+                  </button>
+                <button
+                    type="button"
+                    onClick={() => {
+                      setForm((prev) => ({ ...prev, mode: ACTIVATION_MODE_LAITS }));
+                      if (formErrors.mode) setFormErrors((prev) => ({ ...prev, mode: undefined }));
+                    }}
+                    className={`rounded-xl border p-4 text-left transition-all duration-300 outline-none ${
+                      form.mode === ACTIVATION_MODE_LAITS
+                        ? "border-cyan-glow/60 bg-cyan-glow/10 ring-2 ring-cyan-glow/20"
+                        : "border-navy-600/50 bg-navy-800/50 hover:border-cyan-glow/30 hover:bg-navy-800/80"
+                    }`}
+                  >
+                    <p className="mb-1 text-sm font-semibold text-navy-100">
+                      Laits Software
+                    </p>
+                    <p className="mb-1 text-xs leading-relaxed text-navy-400">
+                      Ketika pelanggan memberi rating 1–3 akan diarahkan ke WhatsApp terdaftar untuk memberikan masukan, sementara rating 4–5 langsung diarahkan ke halaman Google Review.
+                    </p>
+                  </button>
+                </div>
+                {formErrors.mode && (
+                  <p className="mt-1.5 text-xs text-red-400">{formErrors.mode}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-navy-200">
                   6-Digit PIN <span className="text-cyan-glow">*</span>
                 </label>
                 <input
@@ -279,7 +359,7 @@ export default function CardReviewPage() {
               </div>
             </div>
 
-            {submitError && (
+{submitError && (
               <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4">
                 <p className="text-sm text-red-400">{submitError}</p>
               </div>
@@ -495,3 +575,4 @@ function ReviewInterface({ cardData }: { cardData: CardData }) {
     </main>
   );
 }
+

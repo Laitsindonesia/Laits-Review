@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import AddressAutocomplete from "../components/AddressAutocomplete";
+import DirectActivatedRedirect from "../components/DirectActivatedRedirect";
+import {
+  ACTIVATION_MODE_DIRECT,
+  ACTIVATION_MODE_LAITS,
+} from "../../lib/activation";
 
 interface FormData {
   companyName: string;
@@ -9,6 +14,7 @@ interface FormData {
   phone: string;
   pin: string;
   placeId: string;
+  mode: string;
 }
 
 export default function SetupPage() {
@@ -18,16 +24,23 @@ export default function SetupPage() {
     phone: "",
     pin: "",
     placeId: "",
+    mode: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [claimError, setClaimError] = useState("");
   const [claiming, setClaiming] = useState(false);
+  const [directSuccess, setDirectSuccess] = useState(false);
+  const [directPlaceId, setDirectPlaceId] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === "phone") {
       const numericValue = value.replace(/[^0-9]/g, "").slice(0, 13);
       setForm((prev) => ({ ...prev, [name]: numericValue }));
+    } else if (name === "address") {
+      // Teks alamat diubah manual -> PlaceId lama tidak berlaku lagi,
+      // wajib pilih ulang dari saran Google Maps.
+      setForm((prev) => ({ ...prev, address: value, placeId: "" }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -52,6 +65,13 @@ export default function SetupPage() {
       newErrors.pin = "PIN harus 6 digit angka";
     }
 
+    if (!form.mode.trim()) {
+      newErrors.mode = "Pilih salah satu mode kartu";
+    } else if (form.mode === ACTIVATION_MODE_DIRECT && !form.placeId.trim()) {
+      newErrors.mode =
+        "Pilih alamat bisnis dari daftar saran Google Maps untuk mode Direct Google Review";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -73,6 +93,7 @@ export default function SetupPage() {
           phone: `62${form.phone.replace(/[^0-9]/g, "").replace(/^0+/, "").replace(/^62/, "")}`,
           placeId: form.placeId,
           pin: form.pin,
+          mode: form.mode,
         }),
       });
 
@@ -81,6 +102,12 @@ export default function SetupPage() {
       if (!response.ok) {
         setClaimError(data.error || "Gagal membuat link review");
         setClaiming(false);
+        return;
+      }
+
+      if (form.mode === ACTIVATION_MODE_DIRECT) {
+        setDirectPlaceId(form.placeId);
+        setDirectSuccess(true);
         return;
       }
 
@@ -107,6 +134,10 @@ export default function SetupPage() {
         ? "border-red-500/50 bg-red-950/30 text-red-200 focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
         : "border-navy-600/50 bg-navy-800/50 text-navy-100 placeholder-navy-500 focus:border-cyan-glow/50 focus:ring-2 focus:ring-cyan-glow/20 focus:bg-navy-800/80"
     }`;
+
+  if (directSuccess) {
+    return <DirectActivatedRedirect placeId={directPlaceId} />;
+  }
 
   return (
     <main className="min-h-screen relative">
@@ -170,7 +201,8 @@ export default function SetupPage() {
               <AddressAutocomplete
                 value={form.address}
                 onChange={(val) => {
-                  setForm((prev) => ({ ...prev, address: val }));
+                  // Teks alamat diubah manual -> PlaceId lama tidak berlaku lagi.
+                  setForm((prev) => ({ ...prev, address: val, placeId: "" }));
                   if (errors.address) setErrors((prev) => ({ ...prev, address: undefined }));
                 }}
                 onSelect={(data) => {
@@ -212,6 +244,55 @@ export default function SetupPage() {
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-navy-200">
+                Mode Kartu <span className="text-cyan-glow">*</span>
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm((prev) => ({ ...prev, mode: ACTIVATION_MODE_DIRECT }));
+                    if (errors.mode) setErrors((prev) => ({ ...prev, mode: undefined }));
+                  }}
+                  className={`rounded-xl border p-4 text-left transition-all duration-300 outline-none ${
+                    form.mode === ACTIVATION_MODE_DIRECT
+                      ? "border-cyan-glow/60 bg-cyan-glow/10 ring-2 ring-cyan-glow/20"
+                      : "border-navy-600/50 bg-navy-800/50 hover:border-cyan-glow/30 hover:bg-navy-800/80"
+                  }`}
+                >
+                  <p className="mb-1 text-sm font-semibold text-navy-100">
+                    Direct Google Review
+                  </p>
+                  <p className="mb-1 text-xs leading-relaxed text-navy-400">
+                    Memudahkan pelanggan memberikan ulasan untuk bisnis Anda langsung dari google review. Tinggal tap NFC atau scan QR Code.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm((prev) => ({ ...prev, mode: ACTIVATION_MODE_LAITS }));
+                    if (errors.mode) setErrors((prev) => ({ ...prev, mode: undefined }));
+                  }}
+                  className={`rounded-xl border p-4 text-left transition-all duration-300 outline-none ${
+                    form.mode === ACTIVATION_MODE_LAITS
+                      ? "border-cyan-glow/60 bg-cyan-glow/10 ring-2 ring-cyan-glow/20"
+                      : "border-navy-600/50 bg-navy-800/50 hover:border-cyan-glow/30 hover:bg-navy-800/80"
+                  }`}
+                >
+                  <p className="mb-1 text-sm font-semibold text-navy-100">
+                    Laits Software
+                  </p>
+                  <p className="mb-1 text-xs leading-relaxed text-navy-400">
+                    Ketika pelanggan memberi rating 1–3 akan diarahkan ke WhatsApp terdaftar untuk memberikan masukan, sementara rating 4–5 langsung diarahkan ke halaman Google Review.
+                  </p>
+                </button>
+              </div>
+              {errors.mode && (
+                <p className="mt-1.5 text-xs text-red-400">{errors.mode}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-navy-200">
                 6-Digit PIN <span className="text-cyan-glow">*</span>
               </label>
               <input
@@ -234,6 +315,8 @@ export default function SetupPage() {
               <p className="text-sm text-red-400">{claimError}</p>
             </div>
           )}
+
+
 
           <button
             type="submit"
