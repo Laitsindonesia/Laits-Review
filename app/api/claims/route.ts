@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import { ACTIVATION_MODE_DIRECT, isValidActivationMode } from "../../../lib/qr";
 
 function hashPin(pin: string): string {
   return crypto.createHash("sha256").update(pin).digest("hex");
@@ -20,11 +21,32 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  const { companyName, address, phone, placeId, pin } = body;
+  const { companyName, address, phone, placeId, pin, mode } = body;
 
   if (!companyName || !phone) {
     return NextResponse.json(
       { error: "Nama bisnis dan nomor telepon wajib diisi" },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidActivationMode(mode)) {
+    return NextResponse.json(
+      {
+        error:
+          "Mode aktivasi wajib dipilih: Direct Google Review atau Laits Software",
+      },
+      { status: 400 }
+    );
+  }
+
+  const cleanPlaceId = typeof placeId === "string" ? placeId.trim() : "";
+  if (mode === ACTIVATION_MODE_DIRECT && !cleanPlaceId) {
+    return NextResponse.json(
+      {
+        error:
+          "Pilih alamat bisnis dari daftar saran Google Maps untuk mode Direct Google Review",
+      },
       { status: 400 }
     );
   }
@@ -53,7 +75,8 @@ export async function POST(request: Request) {
       "Nomor Telpon": phone,
       "Card Status": true,
       "Pin": pin ? hashPin(String(pin)) : null,
-      "PlaceId": placeId || "",
+      "PlaceId": cleanPlaceId,
+      activation_mode: mode,
     })
     .eq("id", unclaimed.id)
     .eq("Card Status", false);
@@ -69,6 +92,7 @@ export async function POST(request: Request) {
     card_id: unclaimed["Card ID"],
     business_name: companyName,
     phone: phone,
-    placeId: placeId || "",
+    placeId: cleanPlaceId,
+    activation_mode: mode,
   });
 }

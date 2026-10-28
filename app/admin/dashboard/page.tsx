@@ -15,6 +15,7 @@ interface Card {
   created_at: string;
   qr_token?: string;
   qr_destination?: string;
+  activation_mode?: string | null;
 }
 
 function getNextCardId(cards: Card[]): string {
@@ -167,7 +168,13 @@ export default function AdminDashboardPage() {
   const handleUnclaim = async (card: Card) => {
     const { error } = await supabase
       .from("cards")
-      .update({ "Card Status": false, "Nama Bisnis": "", "Nomor Telpon": "", "Pin": null })
+      .update({
+        "Card Status": false,
+        "Nama Bisnis": "",
+        "Nomor Telpon": "",
+        Pin: null,
+        activation_mode: null,
+      })
       .eq("id", card.id);
 
     if (!error) {
@@ -188,6 +195,13 @@ export default function AdminDashboardPage() {
   const getDisplayDestination = (card: Card) => {
     if (card.qr_destination) return card.qr_destination;
     return `/r/${card["Card ID"]} (default)`;
+  };
+
+  const getModeLabel = (card: Card) => {
+    if (card.activation_mode === "DIRECT_GOOGLE_REVIEW")
+      return "Direct Google Review";
+    if (card.activation_mode === "LAITS_SOFTWARE") return "Laits Software";
+    return "- (kartu lama / belum memilih)";
   };
 
   const openQR = (card: Card) => {
@@ -638,6 +652,8 @@ export default function AdminDashboardPage() {
                 QR → <span className="font-mono text-cyan-glow">{getQrLink(showQR)}</span>
                 <br />
                 Tujuan → <span className="font-mono text-navy-200">{getDisplayDestination(showQR)}</span>
+                <br />
+                Mode Aktivasi → <span className="font-mono text-navy-200">{getModeLabel(showQR)}</span>
               </p>
               <div className="mb-4 rounded-xl border border-navy-600/50 bg-navy-800/40 p-4">
                 <label className="mb-1.5 block text-sm font-medium text-navy-200">

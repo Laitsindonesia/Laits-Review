@@ -1,0 +1,24 @@
+
+> review-gating@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.40.136.213:3000
+- Environments: .env.local
+✓ Ready in 2.9s
+✓ Running next.config.ts took 1193ms
+
+○ Compiling / ...
+ GET / 200 in 6.2s (next.js: 5.0s, application-code: 1171ms)
+ GET /admin 200 in 738ms (next.js: 633ms, application-code: 105ms)
+ GET /admin/login 200 in 269ms (next.js: 85ms, application-code: 184ms)
+ GET /admin/login 200 in 433ms (next.js: 30ms, application-code: 404ms)
+ GET /admin/dashboard 200 in 410ms (next.js: 232ms, application-code: 178ms)
+ GET /admin/dashboard 200 in 127ms (next.js: 15ms, application-code: 112ms)
+ GET /api/cards 200 in 11.0s (next.js: 407ms, application-code: 10.6s)
+ GET /api/cards 200 in 6.7s (next.js: 32ms, application-code: 6.7s)
+ GET / 200 in 304ms (next.js: 25ms, application-code: 279ms)
+ GET /setup 200 in 339ms (next.js: 120ms, application-code: 219ms)
+ GET / 200 in 537ms (next.js: 67ms, application-code: 471ms)
+ GET /setup 200 in 75ms (next.js: 15ms, application-code: 61ms)

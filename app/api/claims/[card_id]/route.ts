@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import {
+  ACTIVATION_MODE_DIRECT,
+  isValidActivationMode,
+} from "../../../../lib/qr";
 
 function hashPin(pin: string): string {
   return crypto.createHash("sha256").update(pin).digest("hex");
@@ -18,7 +22,9 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("cards")
-    .select('"Card ID", "Card Status", "Nama Bisnis", "Nomor Telpon", "PlaceId", qr_token, qr_destination')
+    .select(
+      '"Card ID", "Card Status", "Nama Bisnis", "Nomor Telpon", "PlaceId", qr_token, qr_destination, activation_mode'
+    )
     .eq("Card ID", card_id)
     .single();
 
@@ -37,6 +43,7 @@ export async function GET(
     place_id: data["PlaceId"] || "",
     qr_token: data.qr_token || "",
     qr_destination: data.qr_destination || "",
+    activation_mode: data.activation_mode || "",
   });
 }
 
@@ -56,11 +63,32 @@ export async function PUT(
     );
   }
 
-  const { companyName, address, phone, placeId, pin } = body;
+  const { companyName, address, phone, placeId, pin, mode } = body;
 
   if (!phone) {
     return NextResponse.json(
       { error: "Nomor WhatsApp wajib diisi" },
+      { status: 400 }
+    );
+  }
+
+  if (!isValidActivationMode(mode)) {
+    return NextResponse.json(
+      {
+        error:
+          "Mode aktivasi wajib dipilih: Direct Google Review atau Laits Software",
+      },
+      { status: 400 }
+    );
+  }
+
+  const cleanPlaceId = typeof placeId === "string" ? placeId.trim() : "";
+  if (mode === ACTIVATION_MODE_DIRECT && !cleanPlaceId) {
+    return NextResponse.json(
+      {
+        error:
+          "Pilih alamat bisnis dari daftar saran Google Maps untuk mode Direct Google Review",
+      },
       { status: 400 }
     );
   }
@@ -92,7 +120,8 @@ export async function PUT(
       "Nomor Telpon": phone,
       "Card Status": true,
       "Pin": pin ? hashPin(String(pin)) : null,
-      "PlaceId": placeId || "",
+      "PlaceId": cleanPlaceId,
+      activation_mode: mode,
     })
     .eq("Card ID", card_id)
     .eq("Card Status", false);
@@ -108,6 +137,7 @@ export async function PUT(
     card_id: card_id,
     business_name: companyName || "",
     phone: phone,
-    place_id: placeId || "",
+    place_id: cleanPlaceId,
+    activation_mode: mode,
   });
 }

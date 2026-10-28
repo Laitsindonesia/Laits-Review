@@ -26,10 +26,9 @@ export default function PesanKartuPage() {
         <p className="mx-auto mb-3 max-w-2xl text-lg font-semibold text-navy-200">
           Ubah Pelanggan Puas Menjadi Ulasan Bintang 5.
         </p>
-        <p className="mx-auto mb-10 max-w-xl text-sm text-navy-400">
-          Cukup minta mereka tap kartu ini ke HP, dan halaman ulasan Google
-          Anda akan langsung terbuka otomatis.
-        </p>
+<p className="mx-auto mb-10 max-w-xl text-sm text-navy-400">
+              Cukup tap NFC di kartu atau scan QR Code di belakangnya, lalu ulasan Google bisnis Anda akan langsung terbuka.
+            </p>
 
         <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <a
@@ -71,8 +70,7 @@ export default function PesanKartuPage() {
             Hanya Butuh 3 Detik
           </h2>
           <p className="mx-auto max-w-xl text-sm text-navy-400">
-            Hilangkan semua kerumitan. Permudah pelanggan Anda untuk memberikan
-            rating terbaik mereka.
+            Memudahkan pelanggan memberikan ulasan untuk bisnis Anda langsung dari Google Review. Tinggal tap NFC atau scan QR Code.
           </p>
         </div>
 

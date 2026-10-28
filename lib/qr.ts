@@ -90,3 +90,68 @@ export function resolveRedirectTarget(qrDestination: string, cardId: string): st
   if (!dest) return `/r/${cardId}`;
   return dest;
 }
+
+// ---------------------------------------------------------------------------
+// Mode aktivasi kartu (dipilih pelanggan saat aktivasi, terpisah dari endpoint admin)
+// Definisi di lib/activation.ts (client-safe); di-export ulang agar API tetap satu pintu.
+// ---------------------------------------------------------------------------
+
+export {
+  ACTIVATION_MODE_DIRECT,
+  ACTIVATION_MODE_LAITS,
+  ACTIVATION_MODES,
+  isValidActivationMode,
+  buildGoogleReviewUrl,
+} from "./activation.ts";
+export type { ActivationMode } from "./activation.ts";
+
+import { ACTIVATION_MODE_DIRECT, buildGoogleReviewUrl } from "./activation.ts";
+
+export interface CardDestinationInput {
+  /** qr_destination dari database (dikelola admin). */
+  qrDestination: string;
+  /** Card ID (mis. "57142") untuk fallback internal /r/[cardId]. */
+  cardId: string;
+  /** activation_mode dari database; NULL untuk kartu lama. */
+  activationMode?: string | null;
+  /** PlaceId bisnis dari database (untuk mode Direct Google Review). */
+  placeId?: string | null;
+}
+
+export type CardDestination =
+  | { kind: "external"; url: string }
+  | { kind: "internal"; path: string }
+  | { kind: "default"; path: string };
+
+/**
+ * Menentukan tujuan akhir kartu saat /q/[token] diakses.
+ *
+ * Urutan prioritas (wajib):
+ * 1. Endpoint admin (qr_destination) jika terisi dan valid -> selalu menang.
+ * 2. Mode aktivasi DIRECT_GOOGLE_REVIEW + PlaceId valid -> URL Google Review.
+ * 3. Mode aktivasi LAITS_SOFTWARE, mode NULL (kartu lama), Direct tanpa PlaceId,
+ *    atau endpoint rusak -> perilaku default /r/[Card ID].
+ */
+export function determineCardDestination(
+  input: CardDestinationInput
+): CardDestination {
+  const dest = (input.qrDestination || "").trim();
+  if (dest) {
+    const check = validateDestination(dest);
+    if (check.ok && check.value) {
+      if (check.kind === "internal") {
+        return { kind: "internal", path: check.value };
+      }
+      return { kind: "external", url: check.value };
+    }
+    // Endpoint rusak -> jatuh ke logika mode/default, jangan open redirect.
+  }
+
+  if (input.activationMode === ACTIVATION_MODE_DIRECT) {
+    const url = buildGoogleReviewUrl(input.placeId);
+    if (url) return { kind: "external", url };
+    // Direct tapi PlaceId kosong -> fallback aman ke halaman /r.
+  }
+
+  return { kind: "default", path: `/r/${input.cardId}` };
+}

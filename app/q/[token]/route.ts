@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { validateDestination, resolveRedirectTarget } from "../../../lib/qr";
+import { determineCardDestination } from "../../../lib/qr";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -19,7 +19,7 @@ export async function GET(
   const supabase = createClient(supabaseUrl, supabaseKey);
   const { data, error } = await supabase
     .from("cards")
-    .select('"Card ID", qr_destination')
+    .select('"Card ID", qr_destination, "PlaceId", activation_mode')
     .eq("qr_token", clean)
     .single();
 
@@ -28,34 +28,23 @@ export async function GET(
   }
 
   const cardId = data["Card ID"] as string;
-  const rawDest = (data.qr_destination || "") as string;
-  const target = resolveRedirectTarget(rawDest, cardId);
 
-  // Default: kembali ke halaman review bawaan
-  if (!rawDest) {
-    return NextResponse.redirect(new URL(target, request.url), {
+  // Prioritas: endpoint admin > mode aktivasi > default /r/[Card ID]
+  const dest = determineCardDestination({
+    qrDestination: (data.qr_destination || "") as string,
+    cardId,
+    activationMode: (data.activation_mode as string | null) ?? null,
+    placeId: (data.PlaceId as string | null) ?? null,
+  });
+
+  if (dest.kind === "external") {
+    return NextResponse.redirect(dest.url, {
       status: 302,
       headers: { "Cache-Control": "no-store" },
     });
   }
 
-  const check = validateDestination(rawDest);
-  if (!check.ok || !check.value) {
-    // Destination rusak -> fallback aman ke review, jangan open redirect
-    return NextResponse.redirect(new URL(`/r/${cardId}`, request.url), {
-      status: 302,
-      headers: { "Cache-Control": "no-store" },
-    });
-  }
-
-  if (check.kind === "internal") {
-    return NextResponse.redirect(new URL(check.value, request.url), {
-      status: 302,
-      headers: { "Cache-Control": "no-store" },
-    });
-  }
-
-  return NextResponse.redirect(check.value, {
+  return NextResponse.redirect(new URL(dest.path, request.url), {
     status: 302,
     headers: { "Cache-Control": "no-store" },
   });

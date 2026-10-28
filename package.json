@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --test lib/qr.test.ts",
     "seed": "node scripts/seed.js",
     "migrate-businesses": "node scripts/migrate-businesses.js",
     "hash-pins": "node scripts/hash-existing-pins.js",
